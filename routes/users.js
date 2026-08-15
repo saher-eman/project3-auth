@@ -4,6 +4,7 @@ const verifyToken = require('../middleware/verifyToken');
 
 // Temporary in-memory users list
 let users = [];
+let nextUserId = 1;
 
 // Apply JWT authentication middleware to all user routes
 router.use(verifyToken);
@@ -17,14 +18,14 @@ router.get('/', (req, res) => {
 router.post('/', (req, res) => {
     const { name, email } = req.body;
 
-    // Validation
+    // Validate required fields
     if (!name || !email) {
         return res.status(400).json({
             message: 'Name and email are required'
         });
     }
 
-    // Email format validation
+    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
@@ -35,7 +36,7 @@ router.post('/', (req, res) => {
 
     // Check for duplicate email
     const existingUser = users.find(
-        user => user.email.toLowerCase() === email.toLowerCase()
+        user => user.email.toLowerCase() === email.trim().toLowerCase()
     );
 
     if (existingUser) {
@@ -46,9 +47,7 @@ router.post('/', (req, res) => {
 
     // Create new user
     const newUser = {
-        id: users.length > 0
-            ? Math.max(...users.map(user => user.id)) + 1
-            : 1,
+        id: nextUserId++,
         name: name.trim(),
         email: email.trim().toLowerCase()
     };
@@ -82,14 +81,14 @@ router.put('/:id', (req, res) => {
         });
     }
 
-    // Validation
+    // Validate required fields
     if (!name || !email) {
         return res.status(400).json({
             message: 'Name and email are required'
         });
     }
 
-    // Email format validation
+    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
@@ -98,10 +97,10 @@ router.put('/:id', (req, res) => {
         });
     }
 
-    // Check if email belongs to another user
+    // Check for duplicate email
     const duplicateEmail = users.find(
         existingUser =>
-            existingUser.email.toLowerCase() === email.toLowerCase() &&
+            existingUser.email.toLowerCase() === email.trim().toLowerCase() &&
             existingUser.id !== id
     );
 
